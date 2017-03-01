@@ -1,0 +1,203 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <title>Assess Prototype 1</title>
+        <meta name="description" content="Assessing">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="stylesheet" href="https://unpkg.com/tachyons@4.5.5/css/tachyons.min.css">
+		<style>
+		.fade-enter-active, .fade-leave-active {
+		  transition: opacity .5s
+		}
+		.fade-enter, .fade-leave-active {
+		  opacity: 0
+		}
+		</style>
+</head>
+<body>
+
+<main id="app">
+  <section class="fl w-20 pa3 bg-dark-gray washed-yellow lh-copy">
+  <h1 class="f3 fw1 mb2 lh-title">{{ q.title }}</h1>
+  <p class="pv2 ph2">{{ q.instructions }}</p>
+  
+  <template v-if="q.questiontype === 'radio'">
+    <article class="center br3 ba b--white-30 mb3">
+    <h2 class="f5 bg-near-white br3 br--top dark-gray mv0 pv2 ph3">{{ q.question }}</h2>
+    <div class="center mv4 mw5 lh-copy f4">
+    <input type="radio" id="one" value="0" v-model="picked">
+    <label for="one">{{ q.options[0] }}</label>
+    <br>
+    <input type="radio" id="two" value="1" v-model="picked">
+    <label for="two">{{ q.options[1] }}</label>
+    <br>
+    <input type="radio" id="three" value="2" v-model="picked">
+    <label for="three">{{ q.options[2] }}</label>
+    <br>
+    <input type="radio" id="four" value="3" v-model="picked">
+    <label for="four">{{ q.options[3] }}</label>
+    <br>    
+    </div>
+      
+    <a v-on:click="checkRadio" class="db center mh0 mw4 pa2 pl4 mv3 grow no-underline br-pill ba bw1 washed-green" href="#0">Check Answer</a>
+      
+    
+    </article>
+  </template>
+
+  <template v-if="q.questiontype === 'checkbox'">
+    <h2>{{ q.question }}</h2>
+    <p>{{ q.answer }}</p>
+    
+    <input type="checkbox" id="one" value="1" v-model="checkedOptions">
+    <label for="one">Jack</label><br />
+    <input type="checkbox" id="two" value="2" v-model="checkedOptions">
+    <label for="two">John</label><br />
+    <input type="checkbox" id="three" value="3" v-model="checkedOptions">
+    <label for="three">Mike</label><br />
+    <input type="checkbox" id="four" value="4" v-model="checkedOptions">
+    <label for="four">Mike</label><br />
+    <br>
+    <span>Checked names: {{ checkedOptions }}</span>    
+    <button v-on:click="checkCheckboxes">Check Answer</button>
+  </template>
+  
+  <template v-if="q.questiontype === 'text'">
+    <h2>{{ q.question }}</h2>
+    <p>{{ q.answer }}</p>
+  </template>  
+  
+  <!-- v-if=message pops open feedback display when message exists -->
+  <aside class="near-black pa3" v-if="message" v-bind:class="{ 'bg-light-yellow': !answercorrect, 'bg-light-green':answercorrect }">
+    {{ message }}
+  </aside>
+
+  <br /><br />
+  <button v-on:click="previousq" class="fl"><< Previous</button>
+  <button v-on:click="nextq" class="fr">Next >></button>
+  
+  </section>
+  
+  <section class="fl w-80 pa2">
+    <iframe id="ifrm" v-bind:src="q.iframeurl" style="display: inline; width: 100%; height: 800px"></iframe>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.0.5/vue.min.js"></script>
+<script>
+var questions = [
+  {title: "Finding a Database",
+   instructions: "Locate Georgian’s database page by using the navigation bar at the top of the page, under Resources > Databases A-z.",
+   questiontype: "radio",
+   question: "Which of the following databases is not listed on Georgian’s Database page?",
+   options: ["Chilton Auto manuals", "CARD", "Academic Search Premier", "HR Downloads"],
+   optionsfeedback: ["You are wise Yoda", "Much yet to Learn young Jedi", "The force is not strong with you", "Perhaps seek out Obi Wan for help"],
+   answer: "0", // index of options array that is the correct answer
+   iframeurl: "http://library.georgiancollege.ca/az.php"
+  },
+  
+  {title: "Youtube Video",
+   instructions: "What did the video say about whatever?",
+   questiontype: "checkbox",
+   question: "What are the answers?",
+   options: ["option1", "option2", "option3", "option4"],
+   answer: ["0", "2"], // index of options array that is the correct answer
+   iframeurl: "http://library.georgiancollege.ca/ld.php?content_id=26959759"
+  },  
+  
+  {title: "Lesson 2",
+   instructions: "Go to this, look for that",
+   questiontype: "text",
+   question: "Type the answer",
+   options: "",
+   answer: "correctanswer", // index of options array that is the correct answer
+   iframeurl: "http://ra.ocls.ca/ra/login.aspx?inst=georgian&url=http://search.ebscohost.com/login.aspx?direct=true&type=1&authtype=ip,uid&profile=eds"
+  },  
+];
+
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    q: questions[0], // initialize with first object in array
+    qindex: 0,
+    picked: '', // form answer from user
+    checkedOptions: [],
+    message: '', // this is the feedback once answer is submitted
+    answercorrect: ''  // boolean value will be set in <aside ... v-bind:class>
+  },
+  
+  methods: {
+    
+    nextq: function() {
+      // only increment index if we haven't reached the max element in array
+      if (this.qindex < questions.length-1) {
+        this.qindex++;  
+        
+        // set current object to next object in array
+        this.q = questions[this.qindex];
+      }
+
+      return this.qindex;
+    }, 
+    
+    previousq: function() {
+      // only decrement if we haven't reached the first element in array 
+      if (this.qindex > 0) {
+        this.qindex--;  
+        
+        // set current object to next object in array
+        this.q = questions[this.qindex];
+      }
+      
+      return this.qindex;      
+    },
+    
+    checkRadio: function() {
+      if (this.picked === this.q.answer) {
+        this.message = this.q.optionsfeedback[this.picked];  // setting the <input ... value=arrayOfIndex> made "this.picked" work!
+        this.answercorrect = true;  // determines of panel background color indicates success or incorrect answer
+        return true;
+
+      } else if (this.picked) {
+        this.message = this.q.optionsfeedback[this.picked];
+        this.answercorrect = false;    
+        return false;
+        
+      } else {
+        this.message = "You must choose an answer";
+        this.answercorrect = false;        
+        return false;
+      }
+    },
+    
+    checkCheckboxes: function() {
+      var a = this.q.answer.sort();
+      var b = this.checkedOptions.sort();
+            
+        if (a == null || b == null) {
+          return false;
+        }
+      
+        if (a.length != b.length) {
+          return false;
+        }
+
+        for (var i = 0; i < a.length; ++i) {
+          if (a[i] !== b[i]) {
+            return false;
+          }
+        }
+        return true;
+    }
+  }
+});
+
+
+
+</script>
+</body></html>
+
